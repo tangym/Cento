@@ -17,7 +17,10 @@ public class MainClass {
 	public static void main(String[] args) {
 		try {
 //			Preprocess.qtsFormat();
-			Util.genLexicon();
+//			Util.genLexicon();
+			Util.countCorpusCharNum();
+			System.out.println(Util.CORPUS_SIZE);
+			System.out.println(Util.calSentenceMI("海上生明月", "海上生明月"));
 		}
 		catch (FileNotFoundException fnfe) {
 			System.out.println(fnfe);
