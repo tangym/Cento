@@ -19,8 +19,12 @@ public class MainClass {
 //			Preprocess.qtsFormat();
 //			Util.genLexicon();
 			Util.countCorpusCharNum();
-			System.out.println(Util.CORPUS_SIZE);
-			System.out.println(Util.calSentenceMI("海上生明月", "海上生明月"));
+//			System.out.println(Util.CORPUS_SIZE);
+//			String[] centos = Util.cento("潮平两岸阔");
+//			for (int i=0; i<centos.length; i++) {
+//				System.out.println(centos[i]);	
+//			}
+			Util.genCooc();
 		}
 		catch (FileNotFoundException fnfe) {
 			System.out.println(fnfe);

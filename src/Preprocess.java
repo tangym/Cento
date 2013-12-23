@@ -18,11 +18,11 @@ public class Preprocess {
 	public static final String FL_INPUT_PATH = "input/";
 	public static final String FL_ORIGINAL_PATH = FL_INPUT_PATH + "original/";
 	public static final String FL_IN_QTS = FL_ORIGINAL_PATH + "qts.txt";
-	public static final String FL_OUT = FL_INPUT_PATH + "corpus.txt";
+	public static final String FL_CORPUS = FL_INPUT_PATH + "corpus.txt";
 	
 	public static void qtsFormat() throws FileNotFoundException, IOException {
 		File inFile = new File(FL_IN_QTS);
-		File outFile = new File(FL_OUT);
+		File outFile = new File(FL_CORPUS);
 		
 		BufferedReader reader = new BufferedReader(new FileReader(inFile));
 		FileWriter writer = new FileWriter(outFile, true);
