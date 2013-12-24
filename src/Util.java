@@ -23,7 +23,7 @@ import com.sun.xml.internal.ws.policy.privateutil.PolicyUtils.Collections;
  */
 public class Util {
 	public static final String FL_OUTPUT_PATH = "output/";
-	public static final String FL_LEXICON = FL_OUTPUT_PATH + "lexicon.txt";
+	public static final String FL_LEXICON = "R:/lexicon.txt";//FL_OUTPUT_PATH + "lexicon.txt";
 //	public static final String FL_LEXICON_SORTED = FL_OUTPUT_PATH + "lexicon.sorted.txt";
 	public static final String FL_COOC = FL_OUTPUT_PATH + "cooc.txt";
 	public static int CORPUS_SIZE=0;

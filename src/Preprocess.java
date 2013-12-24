@@ -18,7 +18,7 @@ public class Preprocess {
 	public static final String FL_INPUT_PATH = "input/";
 	public static final String FL_ORIGINAL_PATH = FL_INPUT_PATH + "original/";
 	public static final String FL_IN_QTS = FL_ORIGINAL_PATH + "qts.txt";
-	public static final String FL_CORPUS = FL_INPUT_PATH + "corpus.txt";
+	public static final String FL_CORPUS = "R:/corpus.txt";//FL_INPUT_PATH + "corpus.txt";
 	
 	public static void qtsFormat() throws FileNotFoundException, IOException {
 		File inFile = new File(FL_IN_QTS);
