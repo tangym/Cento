@@ -6,7 +6,11 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 
+import sun.misc.Cache;
 import sun.org.mozilla.javascript.internal.ast.ThrowStatement;
 
 import com.sun.istack.internal.FinalArrayList;
@@ -23,45 +27,15 @@ import com.sun.xml.internal.ws.policy.privateutil.PolicyUtils.Collections;
  */
 public class Util {
 	public static final String FL_OUTPUT_PATH = "output/";
-	public static final String FL_LEXICON = "R:/lexicon.txt";//FL_OUTPUT_PATH + "lexicon.txt";
+	public static final String FL_LEXICON = FL_OUTPUT_PATH + "lexicon.txt";
 //	public static final String FL_LEXICON_SORTED = FL_OUTPUT_PATH + "lexicon.sorted.txt";
 	public static final String FL_COOC = FL_OUTPUT_PATH + "cooc.txt";
-	public static int CORPUS_SIZE=0;
-	public static int N_BEST = 2;
-
+	public static final String FL_CORPUS = Preprocess.FL_CORPUS;
 	
-	//从corpus生成lexicon
-	public static void genLexicon() throws FileNotFoundException,IOException {
-		BufferedReader reader = new BufferedReader(
-				new FileReader(new File(Preprocess.FL_CORPUS)));
-		FileWriter writer = new FileWriter(new File(FL_LEXICON));
-		
-		ArrayList<Character> lexicon = new ArrayList<>();
-		ArrayList<Integer> count = new ArrayList<>();
-		
-		String line = reader.readLine();
-		while (null != line) {
-			for (int i=0; i<line.length(); i++) {
-				Character c = line.charAt(i);
-				if (lexicon.contains(c)) {
-					int index = lexicon.indexOf(line.charAt(i));
-					count.set(index, count.get(index)+1);
-				}
-				else {
-					lexicon.add(c);
-					count.add(1);
-				}
-			}			
-			line = reader.readLine();
-		}
-		
-		for (int i=0; i<lexicon.size(); i++) {
-			writer.append(lexicon.get(i) + " " + count.get(i) + System.getProperty("line.separator"));
-		}
-		
-		reader.close();
-		writer.close();
-	}
+	public static int CORPUS_SIZE=0;
+	public static int N_BEST = 1;
+	public static HashMap<Character, Integer> LEXICON = null;
+	public static HashMap<Character, HashMap<Character, Integer>> COOC = null;
 
 	public static void countCorpusCharNum() 
 			throws FileNotFoundException,IOException {		
@@ -75,44 +49,39 @@ public class Util {
 		}
 	}
 	
-	public static float calMI(String x, String y) 
+	public static float calMI(Character x, Character y) 
 			throws FileNotFoundException,IOException {
-		BufferedReader reader = new BufferedReader(
-				new FileReader(new File(Preprocess.FL_CORPUS)));
+		if (null == LEXICON) {
+			LEXICON = Load.loadLexicon();
+		}
+		if (null == COOC) {
+			COOC = Load.loadCooc();
+		}
 		
-		//判断连续的两句诗
-		String line = reader.readLine();
-		String nextLine = "";
 		int pxy = 0;
 		int px = 0;
 		int py = 0;
 		
-		while (null != line) {
-			nextLine = reader.readLine();
-			
-			if (line.contains(x)) {
-				px++;
-				
-				//计算xy的共现概率
-				if (line.contains(y)) {
-					pxy++;
-				}
-				else {
-					if (null != nextLine) {
-						if (nextLine.contains(y)) {
-							pxy++;
-						}
-					}
-				}
-			}
-			
-			if (line.contains(y)) {
-				py++;
-			}
-			
-			line = nextLine;
+		if (LEXICON.containsKey(x)) {
+			px = LEXICON.get(x);
 		}
 		
+		if (LEXICON.containsKey(y)) {
+			py = LEXICON.get(y);
+		}
+		
+		if (COOC.containsKey(x)) {
+			if (COOC.get(x).containsKey(y)) {
+				pxy = COOC.get(x).get(y);
+			}
+		}
+		else if (COOC.containsKey(y)) {
+			if (COOC.containsKey(x)) {
+				pxy = COOC.get(y).get(x);
+			}
+		}
+		
+	
 		//简单add 1平滑一下
 		if (0 == pxy) {
 			pxy = 1;
@@ -160,6 +129,52 @@ public class Util {
 		return pxy;
 	}
 	
+	public static HashMap<Character, HashMap<Character, Integer>> countCooc() 
+		throws FileNotFoundException,IOException {
+		HashMap<Character, HashMap<Character, Integer>> coocMap = 
+				new HashMap<Character, HashMap<Character, Integer>>();
+		BufferedReader reader = new BufferedReader(
+				new FileReader(new File(Preprocess.FL_CORPUS)));
+		String line = reader.readLine();
+		
+		while (null != line) {
+			//TODO 读每一行并填coocMap
+			for (int i=0; i<line.length(); i++) {
+				for (int j=i+1; j<line.length(); j++) {
+					Character x = line.charAt(i);
+					Character y = line.charAt(j);
+					
+					if (coocMap.containsKey(x)) {
+						HashMap<Character, Integer> tempMap = coocMap.get(x);
+						if (tempMap.containsKey(y)) {
+							tempMap.put(y, tempMap.get(y)+1);
+						}
+						else {
+							tempMap.put(y, 1);
+						}
+					}
+					else if (coocMap.containsKey(y)) {
+						HashMap<Character, Integer> tempMap = coocMap.get(y);
+						if (tempMap.containsKey(x)) {
+							tempMap.put(x, tempMap.get(x)+1);
+						}
+						else {
+							tempMap.put(y, 1);
+						}
+					}
+					else {
+						HashMap<Character, Integer> map = new HashMap<>();
+						map.put(y, 1);
+						coocMap.put(x, map);
+					}
+				}
+			}
+			line = reader.readLine();
+		}
+		
+		return coocMap;
+	} 
+	
 	public static float calSentenceMI(String sentenceX, String sentenceY)
 				throws FileNotFoundException,IOException {
 		float mi = 0;
@@ -168,49 +183,12 @@ public class Util {
 		}
 		else {
 			for (int i=0; i<sentenceX.length(); i++) {
-				mi += calMI(sentenceX.substring(i, i+1), 
-						sentenceY.substring(i, i+1)); 
+				mi += calMI(sentenceX.charAt(i), sentenceY.charAt(i)); 
 			}
 			return mi;
 		}
 	}
  
-	public static void genCooc() throws FileNotFoundException,IOException {
-		BufferedReader readerLex = new BufferedReader(
-				new FileReader(new File(FL_LEXICON)));
-		BufferedReader readerCor = new BufferedReader(
-				new FileReader(new File(Preprocess.FL_CORPUS)));
-		FileWriter writer = new FileWriter(new File(FL_COOC));
-		
-		ArrayList<String> lexicon = new ArrayList<>();
-		
-		String x = readerLex.readLine();
-		while (null != x) {
-			x = x.split(" ")[0];
-			lexicon.add(x);
-			x = readerLex.readLine();
-		}
-		
-		for (int i=0; i<lexicon.size(); i++) {
-			for (int j=i+1; j<lexicon.size(); j++) {
-				int pxy = countCooc(lexicon.get(i), lexicon.get(j));
-				if (0 != pxy) {
-					writer.append(lexicon.get(i) + " " + lexicon.get(j) 
-							+ " " +  pxy + System.getProperty("line.separator"));
-				}
-				
-				if ((i+1)*j%50 == 0) {
-					System.out.println((float) ((2*lexicon.size()-i-1)*i+2*j)/((1+lexicon.size())*lexicon.size()) + "%");
-				}
-			}	
-		}
-		
-		readerCor.close();
-		readerLex.close();
-		writer.close();
-	}
-	
-	//TODO 修改
  	public static String[] cento(String sentence) 
 				throws FileNotFoundException,IOException {
 		String[] best = new String[N_BEST];

@@ -1,5 +1,7 @@
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Iterator;
 
 /**
  * 
@@ -19,12 +21,14 @@ public class MainClass {
 //			Preprocess.qtsFormat();
 //			Util.genLexicon();
 			Util.countCorpusCharNum();
-//			System.out.println(Util.CORPUS_SIZE);
-//			String[] centos = Util.cento("潮平两岸阔");
-//			for (int i=0; i<centos.length; i++) {
-//				System.out.println(centos[i]);	
-//			}
-			Util.genCooc();
+			System.out.println(Util.CORPUS_SIZE);
+			String[] centos = Util.cento("潮平两岸阔");
+			for (int i=0; i<centos.length; i++) {
+				System.out.println(centos[i]);	
+			}
+//			Util.genCooc();
+
+			
 		}
 		catch (FileNotFoundException fnfe) {
 			System.out.println(fnfe);
