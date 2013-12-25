@@ -32,11 +32,36 @@ public class Load {
 				map.put(y, count);
 			}
 			coocMap.put(x, map);
+			line = reader.readLine();
 		}
 		
 		return coocMap;
 	}
 
+	public static HashMap<Character, HashMap<Character, Integer>> loadCoocPara() 
+			throws FileNotFoundException,IOException {
+		HashMap<Character, HashMap<Character, Integer>> coocMap = new HashMap<>();
+		BufferedReader reader = new BufferedReader(
+				new FileReader(new File(Util.FL_COOC_PARA)));
+		String line = reader.readLine();
+		
+		while (null != line) {
+			String[] yList = line.split("#");
+			Character x = yList[0].charAt(0);
+			HashMap<Character, Integer> map = new HashMap<>();
+			
+			for (int i=1; i<yList.length; i++) {
+				Character y = yList[i].charAt(0);
+				Integer count = Integer.valueOf(yList[i].split(" ")[1]);
+				map.put(y, count);
+			}
+			coocMap.put(x, map);
+			line = reader.readLine();
+		}
+		
+		return coocMap;
+	}
+	
 	public static HashMap<Character, Integer> loadLexicon() 
 		throws FileNotFoundException,IOException {
 		HashMap<Character, Integer> lexicon = new HashMap<>();

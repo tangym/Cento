@@ -22,13 +22,12 @@ public class MainClass {
 //			Util.genLexicon();
 			Util.countCorpusCharNum();
 			System.out.println(Util.CORPUS_SIZE);
+//			Generate.genCooc();
+//			Generate.genCoocPara();
 			String[] centos = Util.cento("³±Æ½Á½°¶À«");
 			for (int i=0; i<centos.length; i++) {
 				System.out.println(centos[i]);	
 			}
-//			Util.genCooc();
-
-			
 		}
 		catch (FileNotFoundException fnfe) {
 			System.out.println(fnfe);

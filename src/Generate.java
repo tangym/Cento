@@ -19,6 +19,7 @@ import java.util.Map;
  */
 public class Generate {
 	public final static String FL_COOC = Util.FL_COOC;
+	public final static String FL_COOC_PARA = Util.FL_COOC_PARA;
 	public final static String FL_LEXICON = Util.FL_LEXICON;
 	
 	//´ÓcorpusÉú³Élexicon
@@ -54,7 +55,6 @@ public class Generate {
 		writer.close();
 	}
 
-	
 	public static void genCooc() throws FileNotFoundException,IOException {
 //		BufferedReader readerLex = new BufferedReader(
 //				new FileReader(new File(FL_LEXICON)));
@@ -112,6 +112,35 @@ public class Generate {
 		
 //		readerCor.close();
 //		readerLex.close();
+		writer.close();
+	}	
+	
+	public static void genCoocPara() throws FileNotFoundException,IOException {
+		FileWriter writer = new FileWriter(new File(FL_COOC_PARA));
+		
+		HashMap<Character, HashMap<Character, Integer>> coocMap = Util.countCoocPara();
+		Iterator iterator = coocMap.entrySet().iterator();
+		
+		while (iterator.hasNext()) {
+			String line = "";
+			Map.Entry entry = (Map.Entry) iterator.next();
+			Character keyX = (Character) entry.getKey();
+			HashMap<Character, Integer> value = 
+					(HashMap<Character, Integer>) entry.getValue(); 
+			
+			line += keyX;
+			
+			Iterator valueIterator = value.entrySet().iterator();
+			while (valueIterator.hasNext()) {
+				Map.Entry valueEntry = (Map.Entry) valueIterator.next();
+				Character keyY = (Character) valueEntry.getKey();
+				Integer count = (Integer) valueEntry.getValue();
+				line += ("#" + keyY + " " + count);
+			}
+			
+			
+			writer.append(line + System.getProperty("line.separator"));
+		}
 		writer.close();
 	}
 
