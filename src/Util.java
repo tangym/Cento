@@ -4,17 +4,21 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.List;
 
-import sun.misc.Cache;
-import sun.org.mozilla.javascript.internal.ast.ThrowStatement;
-
-import com.sun.istack.internal.FinalArrayList;
-import com.sun.xml.internal.ws.policy.privateutil.PolicyUtils.Collections;
 
 /**
  * 
@@ -28,13 +32,12 @@ import com.sun.xml.internal.ws.policy.privateutil.PolicyUtils.Collections;
 public class Util {
 	public static final String FL_OUTPUT_PATH = "output/";
 	public static final String FL_LEXICON = FL_OUTPUT_PATH + "lexicon.txt";
-//	public static final String FL_LEXICON_SORTED = FL_OUTPUT_PATH + "lexicon.sorted.txt";
 	public static final String FL_COOC_PARA = FL_OUTPUT_PATH + "cooc.para.txt";
 	public static final String FL_COOC = FL_OUTPUT_PATH + "cooc.txt";
 	public static final String FL_CORPUS = Preprocess.FL_CORPUS;
 	
 	public static int CORPUS_SIZE=0;
-	public static int N_BEST = 10;
+	public static int N_BEST = 5;
 	public static HashMap<Character, Integer> LEXICON = null;
 	public static HashMap<Character, HashMap<Character, Integer>> COOC = null;
 	public static HashMap<Character, HashMap<Character, Integer>> COOC_PARA = null;
@@ -95,9 +98,7 @@ public class Util {
 			py = 1;
 		}
 		
-		
-		//TODO pxy,px和py暂时只用频数代替，频率不知道具体怎么求(写成了出现次数/语料库大小)
-		return (float) ((pxy)*Math.log((float)pxy*CORPUS_SIZE/(px*py))/Math.log(2)/CORPUS_SIZE);
+		return (float) ((pxy)*Math.log(pxy*(double)CORPUS_SIZE/(px*(double)py))/Math.log(2)/CORPUS_SIZE);
 	}
 
 	public static float calMIPara(Character x, Character y) 
@@ -147,9 +148,7 @@ public class Util {
 			py = 1;
 		}
 		
-		
-		//TODO pxy,px和py暂时只用频数代替，频率不知道具体怎么求(写成了出现次数/语料库大小)
-		return (float) ((pxy)*Math.log((float)pxy*CORPUS_SIZE/(px*py))/Math.log(2)/CORPUS_SIZE);
+		return (float) ((pxy)*Math.log(pxy*(double)CORPUS_SIZE/(px*(double)py))/Math.log(2)/CORPUS_SIZE);
 	}
 	
 	public static int countCooc(String x, String y) 
@@ -190,8 +189,10 @@ public class Util {
 		BufferedReader reader = new BufferedReader(
 				new FileReader(new File(Preprocess.FL_CORPUS)));
 		String line = reader.readLine();
-				
+		
+		int l=0;
 		while (null != line) {
+			System.out.println(++l);
 			line = line.replace("）", "").replace("（", "");
 			String[] pair = line.split("，");
 			//判断只有当对仗字数相等时才统计
@@ -202,6 +203,11 @@ public class Util {
 					Character x = pair[0].charAt(i);
 					Character y = pair[1].charAt(i);
 			
+					if (Character.isWhitespace(x.charValue()) 
+							|| Character.isWhitespace(y.charValue())) {
+						continue;
+					}
+					
 					if(x.equals(y)) {
 						continue;
 					}
@@ -257,13 +263,20 @@ public class Util {
 					new FileReader(new File(Preprocess.FL_CORPUS)));
 			String line = reader.readLine();
 					
+			int l = 0;
 			while (null != line) {
+				System.out.println(++l);
 				line = line.replace("）", "").replace("（", "").replace("，", "");
 				//判断只有当对仗字数相等时才统计
 				for (int i=0; i<line.length(); i++) {
 					for (int j=i+1; j<line.length(); j++) { 
 						Character x = line.charAt(i);
 						Character y = line.charAt(j);
+						
+						if (Character.isWhitespace(x.charValue()) 
+								|| Character.isWhitespace(y.charValue())) {
+							continue;
+						}
 							
 						if(x.equals(y)) {
 							continue;
@@ -320,10 +333,33 @@ public class Util {
 			return mi;
 		}
 		else {
+			//一些硬性条件
+			//上下句有相同的字则返回0
+			for (int i=0; i<sentenceX.length(); i++) {
+				if (sentenceY.contains(sentenceX.subSequence(i, i+1))) {
+					return mi;
+				}
+			}
+			//TODO 对应位置字不相同，返回0，不好，应减少mi
+			for (int i=0; i<sentenceX.length(); i++) {
+				for (int j=i+1; j<sentenceY.length(); j++) {
+					if (sentenceX.charAt(i) == sentenceX.charAt(j)) {
+						if (sentenceY.charAt(i) != sentenceY.charAt(j)) {
+							return mi;
+						}
+					}
+					if (sentenceY.charAt(i) == sentenceY.charAt(j)) {
+						if (sentenceX.charAt(i) != sentenceX.charAt(j)) {
+							return mi;
+						}
+					}
+				}
+			}
+			
 			for (int i=0; i<sentenceX.length(); i++) {
 				mi += calMIPara(sentenceX.charAt(i), sentenceY.charAt(i));
 				for (int j=0; j<sentenceY.length(); j++) {
-					mi += (0.05 * calMI(sentenceX.charAt(i), sentenceY.charAt(j)));
+					mi += (0.001 * calMI(sentenceX.charAt(i), sentenceY.charAt(j)));
 				}
 			}
 			return mi;
@@ -331,7 +367,7 @@ public class Util {
 	}
  
  	public static String[] cento(String sentence) 
-				throws FileNotFoundException,IOException {
+				throws FileNotFoundException,IOException,InterruptedException,ExecutionException {
 		String[] best = new String[N_BEST];
 		float[] bestMI = new float[N_BEST];
 		for (int i=0; i<N_BEST; i++) {
@@ -339,14 +375,30 @@ public class Util {
 			bestMI[i] = 0;
 		}
 		
-		BufferedReader reader = new BufferedReader(
-				new FileReader(new File(Preprocess.FL_CORPUS)));
-		String line = reader.readLine();
-
+		File file = new File(Preprocess.FL_CORPUS);
+		List<String> lines = Files.readAllLines(file.toPath(), Charset.defaultCharset());
+//		BufferedReader reader = new BufferedReader(
+//				new FileReader(file));
+//		
+//		String line = reader.readLine();
 		
-		while (null != line) {
-			String[] tokens = line.split("，");
+//		ExecutorService pool = Executors.newFixedThreadPool(2);
+		for (int numLine=0; numLine<lines.size(); numLine++) {
+//		while (null != line) {
+			String[] tokens = lines.get(numLine).trim().split("，");
+//			String[] tokens = line.trim().split("，");
+			
+//			CallableCento[] callable = new CallableCento[tokens.length];
+//			Future[] future = new Future[tokens.length];
+//			float[] mi = new float[tokens.length];
+			
+//			for (int i=0; i<tokens.length; i++) {
+//				callable[i] = new CallableCento(sentence, tokens[i].replace("（", "").replace("）", ""));
+//				future[i] = pool.submit(callable[i]);
+//			}
+			
 			for (int i=0; i<tokens.length; i++) {
+//				mi[i] = (Float) future[i].get();
 				float mi = calSentenceMI(sentence, tokens[i].replace("（", "").replace("）", ""));
 				//将该句的互信息依次与最高的若干项比较，如果更高，则记录
 				//TODO 修改为从后向前比较
@@ -365,13 +417,14 @@ public class Util {
 					}
 				}
 			}
-			line = reader.readLine();
+//			line = reader.readLine();
 		}
-		
-		for (int i=0; i<best.length; i++) {
-			System.out.println(best[i]);
-			System.out.println(bestMI[i]);
-		}
+
+//		pool.shutdown();
+//		for (int i=0; i<best.length; i++) {
+//			System.out.println(best[i]);
+//			System.out.println(bestMI[i]);
+//		}
 		
 		return best;
 	}

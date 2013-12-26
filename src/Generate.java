@@ -35,6 +35,10 @@ public class Generate {
 		while (null != line) {
 			for (int i=0; i<line.length(); i++) {
 				Character c = line.charAt(i);
+				if (Character.isWhitespace(c.charValue())) {
+					continue;
+				}
+				
 				if (lexicon.contains(c)) {
 					int index = lexicon.indexOf(line.charAt(i));
 					count.set(index, count.get(index)+1);
