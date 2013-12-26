@@ -10,11 +10,7 @@ import java.util.Iterator;
 import java.util.Map;
 
 /**
- * 
- */
-
-/**
- * @author Administrator
+ * @author TYM
  *
  */
 public class Generate {
@@ -60,10 +56,6 @@ public class Generate {
 	}
 
 	public static void genCooc() throws FileNotFoundException,IOException {
-//		BufferedReader readerLex = new BufferedReader(
-//				new FileReader(new File(FL_LEXICON)));
-//		BufferedReader readerCor = new BufferedReader(
-//				new FileReader(new File(Preprocess.FL_CORPUS)));
 		FileWriter writer = new FileWriter(new File(FL_COOC));
 		
 		HashMap<Character, HashMap<Character, Integer>> coocMap = Util.countCooc();
@@ -89,33 +81,6 @@ public class Generate {
 			
 			writer.append(line + System.getProperty("line.separator"));
 		}
-		
-		//此方法太慢，效率过低，不用
-//		ArrayList<String> lexicon = new ArrayList<>();
-//		
-//		String x = readerLex.readLine();
-//		while (null != x) {
-//			x = x.split(" ")[0];
-//			lexicon.add(x);
-//			x = readerLex.readLine();
-//		}
-//		
-//		for (int i=0; i<lexicon.size(); i++) {
-//			for (int j=i+1; j<lexicon.size(); j++) {
-//				int pxy = countCooc(lexicon.get(i), lexicon.get(j));
-//				if (0 != pxy) {
-//					writer.append(lexicon.get(i) + " " + lexicon.get(j) 
-//							+ " " +  pxy + System.getProperty("line.separator"));
-//				}
-//				
-//				if ((i+1)*j%50 == 0) {
-//					System.out.println((float) ((2*lexicon.size()-i-1)*i+2*j)/((1+lexicon.size())*lexicon.size()) + "%");
-//				}
-//			}	
-//		}
-		
-//		readerCor.close();
-//		readerLex.close();
 		writer.close();
 	}	
 	

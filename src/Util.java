@@ -19,11 +19,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.List;
 
-
-/**
- * 
- */
-
 /**
  * @author TYM
  * @version 1.0.0
@@ -41,7 +36,8 @@ public class Util {
 	public static HashMap<Character, Integer> LEXICON = null;
 	public static HashMap<Character, HashMap<Character, Integer>> COOC = null;
 	public static HashMap<Character, HashMap<Character, Integer>> COOC_PARA = null;
-
+	public static List<String> lines = null;
+	
 	public static void countCorpusCharNum() 
 			throws FileNotFoundException,IOException {		
 		BufferedReader reader = new BufferedReader(
@@ -375,33 +371,12 @@ public class Util {
 			bestMI[i] = 0;
 		}
 		
-		File file = new File(Preprocess.FL_CORPUS);
-		List<String> lines = Files.readAllLines(file.toPath(), Charset.defaultCharset());
-//		BufferedReader reader = new BufferedReader(
-//				new FileReader(file));
-//		
-//		String line = reader.readLine();
-		
-//		ExecutorService pool = Executors.newFixedThreadPool(2);
 		for (int numLine=0; numLine<lines.size(); numLine++) {
-//		while (null != line) {
 			String[] tokens = lines.get(numLine).trim().split("，");
-//			String[] tokens = line.trim().split("，");
-			
-//			CallableCento[] callable = new CallableCento[tokens.length];
-//			Future[] future = new Future[tokens.length];
-//			float[] mi = new float[tokens.length];
-			
-//			for (int i=0; i<tokens.length; i++) {
-//				callable[i] = new CallableCento(sentence, tokens[i].replace("（", "").replace("）", ""));
-//				future[i] = pool.submit(callable[i]);
-//			}
 			
 			for (int i=0; i<tokens.length; i++) {
-//				mi[i] = (Float) future[i].get();
 				float mi = calSentenceMI(sentence, tokens[i].replace("（", "").replace("）", ""));
 				//将该句的互信息依次与最高的若干项比较，如果更高，则记录
-				//TODO 修改为从后向前比较
 				for (int j=0; j<best.length; j++) {					
 					if (mi > bestMI[j]) {
 						for (int k=j; k<best.length-1; k++) {
@@ -417,15 +392,7 @@ public class Util {
 					}
 				}
 			}
-//			line = reader.readLine();
 		}
-
-//		pool.shutdown();
-//		for (int i=0; i<best.length; i++) {
-//			System.out.println(best[i]);
-//			System.out.println(bestMI[i]);
-//		}
-		
 		return best;
 	}
 }

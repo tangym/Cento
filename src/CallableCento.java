@@ -1,6 +1,8 @@
 import java.util.concurrent.Callable;
+
 /**
- * 
+ * 无关文件
+ * 本想通过多线程加速，但因为瓶颈是IO，因此加速不明显
  */
 
 /**
